@@ -169,3 +169,29 @@ app.get("/getNote/:noteId", express.json(), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+// -----------------------------------------------------------------------------------------------------------------------------------
+
+// Retrieve all notes belonging to the user
+app.get("/getAllNotes", express.json(), async (req, res) => {
+  try {
+    // Verify the JWT from the request headers
+    const token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, "secret-key", async (err, decoded) => {
+      if (err) {
+        return res.status(401).send("Unauthorized.");
+      }
+
+      // Find all notes for user
+      const collection = db.collection(COLLECTIONS.notes);
+      const data = await collection.find({
+        username: decoded.username,
+      }).toArray();
+
+      res.json({ response: data });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
