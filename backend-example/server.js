@@ -231,3 +231,73 @@ app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+ // Edit a note belonging to the user
+ app.patch("/editNote/:noteId", express.json(), async (req, res) => {
+  try {
+    // Basic param checking
+    const noteId = req.params.noteId;
+    if (!ObjectId.isValid(noteId)) {
+      return res.status(400).json({ error: "Bad request in relation to the :noteId URL parameter." });
+    }
+
+    // Basic body request check
+    const { title, content } = req.body;
+    if (title == undefined && content == undefined) {
+      return res
+        .status(400)
+        .json({ error: "Title or content is required." });
+    }
+    if(title == "" || content == ""){
+      return res
+        .status(400)
+        .json({ error: "You can't pass title or content in the body as an empty string(Remove completley if you don't want it updated)," });
+    }
+
+    // Verify the JWT from the request headers
+    const token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, "secret-key", async (err, decoded) => {
+      if (err) {
+        return res.status(401).send("Unauthorized.");
+      }
+
+      const id = new ObjectId(noteId);
+
+      // Edit note with given ID
+      const collection = db.collection(COLLECTIONS.notes);
+      let result = null;
+      if(title == undefined) {
+        result = await collection.updateOne(
+          {
+            username: decoded.username,
+            _id: id 
+          }, 
+          { $set: { content: content } }
+        );
+      }
+      else if(content == undefined) {
+        result = await collection.updateOne(
+          {
+            username: decoded.username,
+            _id: id 
+          }, 
+          { $set: { title: title } }
+        );
+      }
+      else {
+        result = await collection.updateOne(
+          {
+            username: decoded.username,
+            _id: id 
+          }, 
+          { $set: { title: title, content: content } }
+        );
+      }
+      res.json({
+        response:  `Document with id ${id} properly updated.`,
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
