@@ -195,3 +195,39 @@ app.get("/getAllNotes", express.json(), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Delete a note belonging to the user
+app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
+  try {
+    // Basic param checking
+    const noteId = req.params.noteId;
+    if (!ObjectId.isValid(noteId)) {
+      return res.status(400).json({ error: "Bad request in relation to the :noteId URL parameter." });
+    }
+
+    // Verify the JWT from the request headers
+    const token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, "secret-key", async (err, decoded) => {
+      if (err) {
+        return res.status(401).send("Unauthorized.");
+      }
+
+      const id = new ObjectId(noteId);
+
+      // Delete note with given ID
+      const collection = db.collection(COLLECTIONS.notes);
+      const result = await collection.deleteOne({
+        username: decoded.username,
+        _id: id,
+      });
+      if (result.deletedCount == 0) {
+        return res
+          .status(404)
+          .json({ error: `Note with ID ${id} belonging to the user not found.` });
+      }
+      res.json({ response: `Document with ID ${id} properly deleted.` });
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
