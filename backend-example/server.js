@@ -202,7 +202,7 @@ app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
     // Basic param checking
     const noteId = req.params.noteId;
     if (!ObjectId.isValid(noteId)) {
-      return res.status(400).json({ error: "Bad request in relation to the :noteId URL parameter." });
+      return res.status(400).json({ error: "Invalid Note ID" });
     }
 
     // Verify the JWT from the request headers
@@ -238,7 +238,7 @@ app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
     // Basic param checking
     const noteId = req.params.noteId;
     if (!ObjectId.isValid(noteId)) {
-      return res.status(400).json({ error: "Bad request in relation to the :noteId URL parameter." });
+      return res.status(400).json({ error: "Invalid Note Id" });
     }
 
     // Basic body request check
@@ -251,7 +251,7 @@ app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
     if(title == "" || content == ""){
       return res
         .status(400)
-        .json({ error: "You can't pass title or content in the body as an empty string(Remove completley if you don't want it updated)," });
+        .json({ error: "You can't pass title or content in the body as an empty string (Remove completley if you don't want it updated)." });
     }
 
     // Verify the JWT from the request headers
@@ -292,6 +292,11 @@ app.delete("/deleteNote/:noteId", express.json(), async (req, res) => {
           }, 
           { $set: { title: title, content: content } }
         );
+      }
+      if (result.modifiedCount == 0) {
+        return res
+          .status(404)
+          .json({ error: `Note with ID ${id} belonging to the user not found.` });
       }
       res.json({
         response:  `Document with id ${id} properly updated.`,
